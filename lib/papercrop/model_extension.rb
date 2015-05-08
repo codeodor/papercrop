@@ -15,7 +15,14 @@ module Papercrop
       # @param opts [Hash]
       def crop_attached_file(attachment_name, opts = {})
         [:crop_x, :crop_y, :crop_w, :crop_h, :original_w, :original_h, :box_w, :aspect, :cropped_geometries].each do |a|
-          attr_accessor :"#{attachment_name}_#{a}"
+          send :define_method, :"#{attachment_name}_#{a}" do
+            self.instance_variable_get(:"@#{attachment_name}_#{a}")
+          end
+          send :define_method, :"#{attachment_name}_#{a}=" do |val|
+            self.instance_variable_set(:"@#{attachment_name}_#{a}", val)
+            self.send(:"updated_at_will_change!") if val.present?
+            val
+          end
         end
 
         if opts[:aspect].kind_of?(String) && opts[:aspect] =~ Papercrop::RegExp::ASPECT
